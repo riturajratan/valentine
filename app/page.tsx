@@ -113,16 +113,24 @@ export default function Home() {
       <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-12 max-w-4xl w-full border border-white/20 animate-slide-up">
         {/* Header */}
         <div className="mb-6">
+          {/* Animated Mail Icon */}
+          <div className="text-center mb-6">
+            <div className="inline-block relative">
+              <div className="text-7xl md:text-8xl mb-2 animate-bounce-slow cursor-pointer hover:scale-110 transition-transform">
+                💌
+              </div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full animate-ping"></div>
+            </div>
+          </div>
+
           <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex-1">
-              <h1 className="text-3xl md:text-5xl font-black mb-2">
-                <span className="bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent">
-                  Valentine Generator
-                </span>{' '}
-                <span className="inline-block">💌</span>
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl md:text-5xl font-black mb-2 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent">
+                Valentine Generator
               </h1>
               <p className="text-gray-600 text-sm md:text-base">
-                Create a playful Valentine message!
+                Create a playful Valentine message that will{' '}
+                <span className="font-semibold text-pink-600">make their heart skip a beat!</span> 💕
               </p>
             </div>
 
