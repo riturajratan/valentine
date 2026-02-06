@@ -173,21 +173,27 @@ function ValentineContent() {
       })
     }
 
+    // Only attach after loading is complete
+    if (loading) return
+
+    // Store container reference for cleanup
+    const container = containerRef.current
+
     // Attach native event listener (bypasses React's synthetic events)
-    if (containerRef.current) {
-      containerRef.current.addEventListener('mousemove', handleMouseMove, { passive: true })
+    if (container) {
+      container.addEventListener('mousemove', handleMouseMove, { passive: true })
     }
 
     return () => {
-      // Cleanup
-      if (containerRef.current) {
-        containerRef.current.removeEventListener('mousemove', handleMouseMove)
+      // Cleanup - use stored reference
+      if (container) {
+        container.removeEventListener('mousemove', handleMouseMove)
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [])
+  }, [loading])
 
   const handleYesClick = async () => {
     setShowCelebration(true)
