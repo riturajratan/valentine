@@ -347,11 +347,15 @@ function ValentineContent() {
             </div>
             <div className="relative rounded-2xl overflow-hidden shadow-2xl animate-scale-up border-4 border-pink-300" style={{ animationDelay: '0.3s' }}>
               <img
-                src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGw4anN0dGdvN2Fma2x6aHFxZWRzbWo4ajFkNW5kNWJqYmFqYzZqZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26u4cqiYI30juCOGY/giphy.gif"
-                alt="Love Celebration"
+                src="https://media.giphy.com/media/G96zgIcQn1L2xpmdxi/giphy.gif"
+                alt="Love Celebration - They Said Yes!"
                 className="max-w-full w-full"
+                style={{ maxHeight: '400px', objectFit: 'cover' }}
               />
             </div>
+            <p className="text-lg text-gray-600 mt-6 italic animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              💌 Your sender will receive an email notification!
+            </p>
 
             {/* Support Links */}
             <div className="mt-8 pt-6 border-t border-pink-200 text-center animate-fade-in" style={{ animationDelay: '0.5s' }}>

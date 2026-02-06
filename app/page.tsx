@@ -115,8 +115,11 @@ export default function Home() {
         <div className="mb-6">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex-1">
-              <h1 className="text-3xl md:text-5xl font-black mb-2 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent">
-                Valentine Generator 💌
+              <h1 className="text-3xl md:text-5xl font-black mb-2">
+                <span className="bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent">
+                  Valentine Generator
+                </span>{' '}
+                <span className="inline-block">💌</span>
               </h1>
               <p className="text-gray-600 text-sm md:text-base">
                 Create a playful Valentine message!
