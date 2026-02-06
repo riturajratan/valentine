@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 function ValentineContent() {
@@ -14,6 +14,7 @@ function ValentineContent() {
   const [yesScale, setYesScale] = useState(1)
   const [noPosition, setNoPosition] = useState({ x: 0, y: 0 })
   const [shake, setShake] = useState(false)
+  const [lastDodgeTime, setLastDodgeTime] = useState(0)
 
   const noBtnRef = useRef<HTMLButtonElement>(null)
   const maxDodges = 8
@@ -51,38 +52,37 @@ function ValentineContent() {
       Math.pow(e.clientY - noBtnCenterY, 2)
     )
 
-    // Increased detection range and more aggressive dodging
-    if (distance < 200) {
-      moveNoButton(e.clientX, e.clientY, distance)
-      setDodgeCount(prev => prev + 1)
-      setYesScale(prev => Math.min(prev + 0.2, 2.5))
-      setShake(true)
-      setTimeout(() => setShake(false), 500)
-    }
-  }
-
-  const moveNoButton = (mouseX: number, mouseY: number, currentDistance: number) => {
-    if (!noBtnRef.current) return
-
-    const rect = noBtnRef.current.getBoundingClientRect()
+    // ALWAYS move the button away from cursor (continuous tracking)
     const angle = Math.atan2(
-      rect.top + rect.height / 2 - mouseY,
-      rect.left + rect.width / 2 - mouseX
+      noBtnCenterY - e.clientY,
+      noBtnCenterX - e.clientX
     )
 
-    // More aggressive dodging - moves further away based on how close cursor is
-    const dodgeIntensity = Math.max(200, 400 - currentDistance)
-    const distance = dodgeIntensity + Math.random() * 100
-    let newX = Math.cos(angle) * distance
-    let newY = Math.sin(angle) * distance
+    // Keep button at a minimum distance from cursor
+    const minDistance = 180
+    if (distance < minDistance) {
+      const moveDistance = minDistance - distance + 50
+      let newX = Math.cos(angle) * moveDistance
+      let newY = Math.sin(angle) * moveDistance
 
-    const maxX = window.innerWidth - rect.width - 50
-    const maxY = window.innerHeight - rect.height - 50
+      const maxX = window.innerWidth - rect.width - 50
+      const maxY = window.innerHeight - rect.height - 50
 
-    newX = Math.max(-rect.left + 20, Math.min(newX, maxX - rect.left))
-    newY = Math.max(-rect.top + 20, Math.min(newY, maxY - rect.top))
+      newX = Math.max(-rect.left + 20, Math.min(newX, maxX - rect.left))
+      newY = Math.max(-rect.top + 20, Math.min(newY, maxY - rect.top))
 
-    setNoPosition({ x: newX, y: newY })
+      setNoPosition({ x: newX, y: newY })
+
+      // Only increment dodge count once per second to avoid too many updates
+      const now = Date.now()
+      if (now - lastDodgeTime > 1000) {
+        setLastDodgeTime(now)
+        setDodgeCount(prev => prev + 1)
+        setYesScale(prev => Math.min(prev + 0.2, 2.5))
+        setShake(true)
+        setTimeout(() => setShake(false), 500)
+      }
+    }
   }
 
   const handleYesClick = async () => {
@@ -285,14 +285,15 @@ function ValentineContent() {
               <button
                 ref={noBtnRef}
                 onClick={handleNoClick}
-                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg hover:scale-105 no-button-smooth"
+                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg"
                 style={{
                   background: '#e5e7eb',
                   color: '#6b7280',
                   transform: `translate(${noPosition.x}px, ${noPosition.y}px)`,
                   opacity: dodgeCount >= maxDodges ? 0.3 : 1,
                   pointerEvents: dodgeCount >= maxDodges ? 'none' : 'auto',
-                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease',
+                  transition: 'transform 0.15s ease-out, opacity 0.3s ease',
+                  willChange: 'transform',
                 }}
               >
                 No 😢
