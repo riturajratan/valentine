@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch message details
-    const { data: message, error: fetchError } = await supabase
+    // Fetch message details using admin client
+    const { data: message, error: fetchError } = await supabaseAdmin
       .from('messages')
       .select('*')
       .eq('id', messageId)
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update message as clicked
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('messages')
       .update({
         clicked: true,
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Record click in clicks table
-    await supabase
+    await supabaseAdmin
       .from('clicks')
       .insert([
         {
@@ -62,12 +62,17 @@ export async function POST(request: NextRequest) {
         }
       ])
 
-    // Send email notification via Resend
+    // Send email notification via Resend with custom domain
     try {
       const emailSubject = '💖 Someone said YES to your Valentine!'
       const senderInfo = message.sender_name
         ? `from ${message.sender_name}`
         : ''
+
+      const fromEmail = process.env.RESEND_FROM_EMAIL ||
+                        'noreply@bemyvalentine.maddyzone.com'
+      const fromName = process.env.RESEND_FROM_NAME ||
+                       'Valentine App'
 
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -88,13 +93,13 @@ export async function POST(request: NextRequest) {
             </p>
           </div>
           <p style="margin-top: 30px; font-size: 14px; color: #999; text-align: center;">
-            Sent via Valentine Message Generator 💕
+            Sent via <a href="https://bemyvalentine.maddyzone.com" style="color: #ff6b9d; text-decoration: none;">Valentine Message Generator</a> 💕
           </p>
         </div>
       `
 
       await resend.emails.send({
-        from: 'Valentine App <onboarding@resend.dev>',
+        from: `${fromName} <${fromEmail}>`,
         to: message.sender_email,
         subject: emailSubject,
         html: emailHtml,

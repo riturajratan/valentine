@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function AdminLoginPage() {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -14,12 +15,26 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
 
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD || password === 'Rajarani@945#') {
-      // Store in session storage
-      sessionStorage.setItem('adminAuth', 'true')
-      router.push('/admin')
-    } else {
-      setError('Invalid password')
+    try {
+      const response = await fetch('/api/admin/whitelist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Store auth in session storage
+        sessionStorage.setItem('adminAuth', 'true')
+        sessionStorage.setItem('adminEmail', email)
+        router.push('/admin')
+      } else {
+        setError(data.error || 'Authentication failed')
+        setLoading(false)
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.')
       setLoading(false)
     }
   }
@@ -32,10 +47,24 @@ export default function AdminLoginPage() {
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">🔐</div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Login</h1>
-          <p className="text-gray-600">Enter password to access dashboard</p>
+          <p className="text-gray-600">Enter credentials to access dashboard</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-left mb-2 text-gray-700 font-semibold">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@example.com"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-purple-500 transition-all"
+            />
+          </div>
+
           <div>
             <label className="block text-left mb-2 text-gray-700 font-semibold">
               Password

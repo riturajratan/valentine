@@ -1,8 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import SignInButton from '@/components/SignInButton'
+import TurnstileWidget from '@/components/TurnstileWidget'
 
 export default function Home() {
+  const { data: session, status } = useSession()
   const [recipientName, setRecipientName] = useState('')
   const [senderEmail, setSenderEmail] = useState('')
   const [senderName, setSenderName] = useState('')
@@ -10,6 +14,9 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; left: number; delay: number }[]>([])
+  const [captchaToken, setCaptchaToken] = useState('')
+  const [rateLimitRemaining, setRateLimitRemaining] = useState<number | null>(null)
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false)
 
   useEffect(() => {
     // Generate floating hearts
@@ -23,6 +30,19 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check if user is authenticated
+    if (!session) {
+      setShowAuthPrompt(true)
+      return
+    }
+
+    // Check CAPTCHA
+    if (!captchaToken) {
+      alert('Please complete the CAPTCHA verification')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -35,6 +55,7 @@ export default function Home() {
           recipientName,
           senderEmail,
           senderName: senderName || null,
+          captchaToken,
         }),
       })
 
@@ -44,8 +65,15 @@ export default function Home() {
         const baseUrl = window.location.origin
         const link = `${baseUrl}/valentine?id=${data.messageId}`
         setGeneratedLink(link)
+        setRateLimitRemaining(data.remaining)
+        // Reset CAPTCHA
+        setCaptchaToken('')
+      } else if (data.requiresAuth) {
+        setShowAuthPrompt(true)
+      } else if (data.rateLimitExceeded) {
+        alert(`Rate limit exceeded! ${data.error}`)
       } else {
-        alert('Failed to generate link. Please try again.')
+        alert(data.error || 'Failed to generate link. Please try again.')
       }
     } catch (error) {
       console.error('Error:', error)
@@ -99,6 +127,44 @@ export default function Home() {
             <span className="font-semibold text-pink-600">make their heart skip a beat!</span> 💕
           </p>
         </div>
+
+        {/* Auth Status Bar */}
+        {status === 'authenticated' ? (
+          <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {session.user.image && (
+                  <img
+                    src={session.user.image}
+                    alt=""
+                    className="w-10 h-10 rounded-full border-2 border-green-300"
+                  />
+                )}
+                <div>
+                  <p className="font-bold text-green-700">
+                    Signed in as {session.user.name || session.user.email}
+                  </p>
+                  {rateLimitRemaining !== null && (
+                    <p className="text-sm text-green-600">
+                      {rateLimitRemaining} messages remaining today
+                    </p>
+                  )}
+                </div>
+              </div>
+              <SignInButton />
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 bg-pink-50 border-2 border-pink-200 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-pink-700">Sign in to create messages</p>
+                <p className="text-sm text-pink-600">Create up to 5 messages per day</p>
+              </div>
+              <SignInButton />
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Recipient Name Input */}
@@ -162,6 +228,17 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* CAPTCHA */}
+          {session && (
+            <TurnstileWidget
+              onSuccess={(token) => setCaptchaToken(token)}
+              onError={() => {
+                setCaptchaToken('')
+                alert('CAPTCHA verification failed. Please try again.')
+              }}
+            />
+          )}
 
           {/* Submit Button */}
           <button
