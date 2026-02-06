@@ -29,7 +29,7 @@ function ValentineContent() {
 
   // Memoize floating hearts to prevent re-creation on every render
   const floatingHearts = useMemo(() => {
-    return [...Array(20)].map((_, i) => ({
+    return [...Array(8)].map((_, i) => ({
       id: i,
       left: Math.random() * 100,
       top: Math.random() * 100,
@@ -46,35 +46,22 @@ function ValentineContent() {
 
     let isMounted = true
 
+    // Fetch data
     fetch(`/api/message?id=${messageId}`)
       .then(res => res.json())
       .then(data => {
-        if (isMounted && data.success) {
-          // Batch both state updates in a single render cycle
-          const name = data.message.recipient_name
-          requestAnimationFrame(() => {
-            if (isMounted) {
-              // Update both states together
-              setRecipientName(name)
-              setLoading(false)
-            }
-          })
-        } else if (isMounted) {
-          requestAnimationFrame(() => {
-            if (isMounted) {
-              setLoading(false)
-            }
-          })
+        if (!isMounted) return
+
+        // Single batched update using React 18 automatic batching
+        if (data.success) {
+          setRecipientName(data.message.recipient_name)
         }
+        setLoading(false)
       })
       .catch(err => {
         console.error('Error:', err)
         if (isMounted) {
-          requestAnimationFrame(() => {
-            if (isMounted) {
-              setLoading(false)
-            }
-          })
+          setLoading(false)
         }
       })
 
