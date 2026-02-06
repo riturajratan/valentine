@@ -69,6 +69,80 @@ CREATE POLICY "Allow public read on clicks"
   TO public
   USING (true);
 
+-- Create users table (for OAuth authentication)
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  google_id TEXT UNIQUE,
+  avatar_url TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_login TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
+
+-- Add missing columns to messages table
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id);
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS ip_address TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id);
+
+-- Create rate_limits table (for rate limiting)
+CREATE TABLE IF NOT EXISTS rate_limits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_email TEXT NOT NULL,
+  action TEXT NOT NULL,
+  count INTEGER DEFAULT 0,
+  window_start TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_limits_user_email ON rate_limits(user_email);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_window_start ON rate_limits(window_start);
+
+-- Enable RLS on new tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for users table
+CREATE POLICY "Allow public read on users"
+  ON users
+  FOR SELECT
+  TO public
+  USING (true);
+
+CREATE POLICY "Allow public insert on users"
+  ON users
+  FOR INSERT
+  TO public
+  WITH CHECK (true);
+
+CREATE POLICY "Allow public update on users"
+  ON users
+  FOR UPDATE
+  TO public
+  USING (true)
+  WITH CHECK (true);
+
+-- RLS policies for rate_limits table
+CREATE POLICY "Allow public access on rate_limits"
+  ON rate_limits
+  FOR ALL
+  TO public
+  USING (true)
+  WITH CHECK (true);
+
+-- Backfill user_id for existing messages (match by email)
+-- This will run safely even if no users exist yet
+UPDATE messages m
+SET user_id = u.id
+FROM users u
+WHERE m.sender_email = u.email
+AND m.user_id IS NULL;
+
 -- Optional: Add some sample data for testing
 -- Uncomment the lines below to add test data
 /*

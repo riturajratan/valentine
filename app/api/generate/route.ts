@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Validate email format
-    const emailValidation = validateEmail(senderEmail)
+    const emailValidation = await validateEmail(senderEmail)
     if (!emailValidation.valid) {
       return NextResponse.json(
         { success: false, error: emailValidation.error },

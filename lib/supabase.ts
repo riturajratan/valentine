@@ -23,3 +23,8 @@ export interface Click {
   recipient_name: string
   sender_email: string
 }
+
+export interface UserMessage extends Message {
+  shareableLink: string
+  status: 'clicked' | 'waiting'
+}

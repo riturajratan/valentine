@@ -14,6 +14,13 @@ export default auth((req) => {
     }
   }
 
+  // Protect /dashboard - require authentication
+  if (req.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL('/auth/signin?callbackUrl=/dashboard', req.url))
+    }
+  }
+
   return NextResponse.next()
 })
 
@@ -22,5 +29,7 @@ export const config = {
   matcher: [
     // Protect API routes that need auth
     '/api/generate',
+    // Protect dashboard page
+    '/dashboard',
   ],
 }

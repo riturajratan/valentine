@@ -1,3 +1,8 @@
+import dns from 'dns'
+import { promisify } from 'util'
+
+const resolveMx = promisify(dns.resolveMx)
+
 // Email regex pattern (RFC 5322 simplified)
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
@@ -22,7 +27,7 @@ interface EmailValidationResult {
   error?: string
 }
 
-export function validateEmail(email: string): EmailValidationResult {
+export async function validateEmail(email: string): Promise<EmailValidationResult> {
   // Basic format check
   if (!email || typeof email !== 'string') {
     return { valid: false, error: 'Email is required' }
@@ -62,6 +67,23 @@ export function validateEmail(email: string): EmailValidationResult {
     return {
       valid: false,
       error: `Did you mean ${suggestions}?`,
+    }
+  }
+
+  // Verify domain has MX records (can receive emails)
+  try {
+    const mxRecords = await resolveMx(domain)
+    if (!mxRecords || mxRecords.length === 0) {
+      return {
+        valid: false,
+        error: 'Email domain cannot receive emails'
+      }
+    }
+  } catch (error) {
+    // DNS lookup failed - domain doesn't exist or has no MX records
+    return {
+      valid: false,
+      error: 'Invalid email domain - domain does not exist'
     }
   }
 

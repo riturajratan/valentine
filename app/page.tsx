@@ -151,7 +151,15 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              <SignInButton />
+              <div className="flex gap-2">
+                <a
+                  href="/dashboard"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 transition-all font-semibold shadow-md hover:scale-105"
+                >
+                  📋 My Links
+                </a>
+                <SignInButton />
+              </div>
             </div>
           </div>
         ) : (
