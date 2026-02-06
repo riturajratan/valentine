@@ -13,6 +13,7 @@ function ValentineContent() {
   const [dodgeCount, setDodgeCount] = useState(0)
   const [yesScale, setYesScale] = useState(1)
   const [noPosition, setNoPosition] = useState({ x: 0, y: 0 })
+  const [shake, setShake] = useState(false)
 
   const noBtnRef = useRef<HTMLButtonElement>(null)
   const maxDodges = 8
@@ -23,7 +24,6 @@ function ValentineContent() {
       return
     }
 
-    // Fetch message details
     fetch(`/api/message?id=${messageId}`)
       .then(res => res.json())
       .then(data => {
@@ -51,10 +51,12 @@ function ValentineContent() {
       Math.pow(e.clientY - noBtnCenterY, 2)
     )
 
-    if (distance < 120) {
+    if (distance < 150) {
       moveNoButton(e.clientX, e.clientY)
       setDodgeCount(prev => prev + 1)
-      setYesScale(prev => Math.min(prev + 0.15, 2.2))
+      setYesScale(prev => Math.min(prev + 0.2, 2.5))
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
     }
   }
 
@@ -67,7 +69,7 @@ function ValentineContent() {
       rect.left + rect.width / 2 - mouseX
     )
 
-    const distance = 100 + Math.random() * 50
+    const distance = 150 + Math.random() * 100
     let newX = Math.cos(angle) * distance
     let newY = Math.sin(angle) * distance
 
@@ -84,8 +86,8 @@ function ValentineContent() {
     setShowCelebration(true)
     createHearts()
     createConfetti()
+    createFireworks()
 
-    // Send notification
     if (messageId) {
       try {
         await fetch('/api/click', {
@@ -104,123 +106,225 @@ function ValentineContent() {
   const handleNoClick = () => {
     alert("Nice try! But you can't escape love! 💕")
     setDodgeCount(prev => prev + 1)
-    setYesScale(prev => Math.min(prev + 0.15, 2.2))
+    setYesScale(prev => Math.min(prev + 0.2, 2.5))
+    setShake(true)
+    setTimeout(() => setShake(false), 500)
   }
 
   const createHearts = () => {
-    const heartEmojis = ['❤️', '💕', '💖', '💗', '💓', '💝', '💘']
+    const heartEmojis = ['❤️', '💕', '💖', '💗', '💓', '💝', '💘', '💞', '💟', '❣️']
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 50; i++) {
       setTimeout(() => {
         const heart = document.createElement('div')
         heart.className = 'heart'
         heart.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)]
         heart.style.cssText = `
           position: fixed;
-          font-size: ${20 + Math.random() * 20}px;
+          font-size: ${30 + Math.random() * 40}px;
           left: ${Math.random() * window.innerWidth}px;
-          bottom: -50px;
-          animation: floatUp ${2 + Math.random() * 2}s ease-out forwards;
+          bottom: -100px;
+          animation: floatUp ${3 + Math.random() * 3}s ease-out forwards;
           pointer-events: none;
           z-index: 1000;
+          filter: drop-shadow(0 0 10px rgba(255, 0, 100, 0.5));
         `
         document.body.appendChild(heart)
-        setTimeout(() => heart.remove(), 3000)
-      }, i * 100)
+        setTimeout(() => heart.remove(), 6000)
+      }, i * 80)
     }
   }
 
   const createConfetti = () => {
-    const colors = ['#ff6b9d', '#ffa8c5', '#c06c84', '#ffd700', '#ff69b4', '#da70d6']
+    const colors = ['#ff6b9d', '#ffa8c5', '#c06c84', '#ffd700', '#ff69b4', '#da70d6', '#87ceeb', '#98fb98']
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
       setTimeout(() => {
         const confetti = document.createElement('div')
+        const size = Math.random() * 15 + 5
         confetti.style.cssText = `
           position: fixed;
-          width: 10px;
-          height: 10px;
+          width: ${size}px;
+          height: ${size}px;
           background-color: ${colors[Math.floor(Math.random() * colors.length)]};
           left: ${Math.random() * window.innerWidth}px;
-          top: -10px;
-          animation: confettiFall ${2 + Math.random() * 2}s ease-out forwards;
+          top: -20px;
+          animation: confettiFall ${3 + Math.random() * 3}s ease-out forwards;
           pointer-events: none;
           z-index: 1000;
+          border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+          opacity: 0.9;
         `
         document.body.appendChild(confetti)
-        setTimeout(() => confetti.remove(), 4000)
-      }, i * 50)
+        setTimeout(() => confetti.remove(), 6000)
+      }, i * 30)
+    }
+  }
+
+  const createFireworks = () => {
+    for (let i = 0; i < 10; i++) {
+      setTimeout(() => {
+        const x = Math.random() * window.innerWidth
+        const y = Math.random() * (window.innerHeight * 0.6)
+
+        for (let j = 0; j < 12; j++) {
+          const particle = document.createElement('div')
+          const angle = (Math.PI * 2 * j) / 12
+          particle.style.cssText = `
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: ${['#ff6b9d', '#ffd700', '#87ceeb', '#98fb98'][Math.floor(Math.random() * 4)]};
+            left: ${x}px;
+            top: ${y}px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+            --angle: ${angle}rad;
+            pointer-events: none;
+            z-index: 999;
+          `
+          document.body.appendChild(particle)
+          setTimeout(() => particle.remove(), 1000)
+        }
+      }, i * 400)
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{
-        background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%)'
-      }}>
-        <div className="text-2xl text-white">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-400 via-red-400 to-purple-500">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">💕</div>
+          <div className="text-2xl text-white font-bold">Loading magic...</div>
+        </div>
       </div>
     )
   }
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-5 overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%)'
-      }}
+      className="min-h-screen flex items-center justify-center p-5 overflow-hidden relative"
       onMouseMove={handleMouseMove}
     >
-      <div className="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl p-12 max-w-lg w-full text-center relative z-10 animate-fadeIn">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-pink-300 via-purple-300 to-red-300 animate-gradient-shift"></div>
+
+      {/* Floating Hearts Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute text-4xl opacity-10 animate-float-random"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${10 + Math.random() * 10}s`,
+            }}
+          >
+            💕
+          </div>
+        ))}
+      </div>
+
+      {/* Main Card */}
+      <div className={`relative z-10 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center border-4 border-white/30 ${shake ? 'animate-shake' : 'animate-pop-in'}`}>
         {!showCelebration ? (
           <>
-            <div className="text-7xl mb-5 animate-float">💝</div>
-            <div className="text-3xl font-bold mb-2" style={{ color: '#ff6b9d' }}>
-              Hey {recipientName}! 💕
+            {/* Main Content */}
+            <div className="mb-8">
+              <div className="text-9xl mb-6 animate-float inline-block hover:scale-110 transition-transform cursor-pointer">
+                💝
+              </div>
+              <div className="text-5xl font-black mb-4 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent animate-slide-down">
+                Hey {recipientName}! 💕
+              </div>
+              <div className="text-4xl font-bold mb-6 text-gray-800 leading-tight animate-slide-down" style={{ animationDelay: '0.1s' }}>
+                Will you be my<br />Valentine?
+              </div>
+              <div className="text-lg text-gray-600 italic mb-8 animate-slide-down" style={{ animationDelay: '0.2s' }}>
+                {dodgeCount > 0 ? (
+                  <span className="text-pink-600 font-semibold">
+                    {dodgeCount >= maxDodges
+                      ? "The No button gave up! 😂 Just say yes already!"
+                      : `Nice try... but "No" is shy today! 😏 (${dodgeCount}/${maxDodges} attempts)`}
+                  </span>
+                ) : (
+                  <span>&quot;No&quot; seems a bit shy today... 😈</span>
+                )}
+              </div>
             </div>
-            <div className="text-4xl font-bold mb-6" style={{ color: '#c06c84' }}>
-              Will you be mine valentine?
-            </div>
-            <div className="text-gray-500 italic mb-8">&quot;No&quot; seems a bit shy 😈</div>
 
-            <div className="flex gap-5 justify-center items-center min-h-[150px] relative">
+            {/* Buttons */}
+            <div className="flex gap-8 justify-center items-center min-h-[200px] relative">
+              {/* Yes Button */}
               <button
                 onClick={handleYesClick}
-                className="px-12 py-4 rounded-full text-2xl font-bold text-white shadow-lg transition-all hover:shadow-xl"
+                className="relative px-16 py-6 rounded-full text-3xl font-black text-white shadow-2xl transition-all duration-300 hover:shadow-pink-500/50 animate-pulse-slow group overflow-hidden"
                 style={{
-                  background: 'linear-gradient(135deg, #ff6b9d 0%, #ff5085 100%)',
+                  background: 'linear-gradient(135deg, #ec4899 0%, #ef4444 100%)',
                   transform: `scale(${yesScale})`,
-                  transformOrigin: 'center'
+                  transformOrigin: 'center',
                 }}
               >
-                Yes 💖
+                <span className="relative z-10 flex items-center gap-3">
+                  Yes! 💖
+                  <span className="text-2xl group-hover:scale-125 transition-transform inline-block">
+                    ✨
+                  </span>
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-red-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </button>
+
+              {/* No Button */}
               <button
                 ref={noBtnRef}
                 onClick={handleNoClick}
-                className="px-12 py-4 rounded-full text-2xl font-bold shadow-lg transition-all absolute"
+                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg transition-all duration-200 hover:scale-105"
                 style={{
-                  background: '#e0e0e0',
-                  color: '#666',
-                  transform: `translate(${noPosition.x}px, ${noPosition.y}px)`
+                  background: '#e5e7eb',
+                  color: '#6b7280',
+                  transform: `translate(${noPosition.x}px, ${noPosition.y}px)`,
+                  opacity: dodgeCount >= maxDodges ? 0.3 : 1,
+                  pointerEvents: dodgeCount >= maxDodges ? 'none' : 'auto',
                 }}
               >
                 No 😢
               </button>
             </div>
+
+            {/* Progress Indicator */}
+            {yesScale > 1 && (
+              <div className="mt-8 text-center animate-fade-in">
+                <div className="inline-flex items-center gap-2 px-6 py-3 bg-pink-100 rounded-full">
+                  <span className="text-2xl animate-bounce">💘</span>
+                  <span className="text-sm font-semibold text-pink-700">
+                    Love is growing stronger! {Math.round((yesScale - 1) * 100)}%
+                  </span>
+                </div>
+              </div>
+            )}
           </>
         ) : (
-          <div className="animate-celebrationIn">
-            <div className="text-8xl mb-5 animate-bounce">🎉</div>
-            <h1 className="text-6xl font-bold mb-5" style={{ color: '#ff6b9d' }}>
-              YAY!
+          /* Celebration Screen */
+          <div className="animate-celebration">
+            <div className="text-9xl mb-8 animate-bounce-big inline-block">
+              🎉
+            </div>
+            <h1 className="text-7xl font-black mb-6 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent animate-scale-up">
+              YAYYY! 🎊
             </h1>
-            <p className="text-2xl text-gray-600">They said YES! 💖</p>
-            <div className="mt-6">
+            <p className="text-3xl text-gray-700 mb-8 font-bold animate-slide-up">
+              They said YES! 💖
+            </p>
+            <div className="text-xl text-gray-600 mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+              Love is in the air! ✨
+            </div>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl animate-scale-up border-4 border-pink-300" style={{ animationDelay: '0.3s' }}>
               <img
                 src="https://media.giphy.com/media/g5R9dok94mrIvplmZd/giphy.gif"
                 alt="Celebration"
-                className="max-w-full rounded-2xl"
+                className="max-w-full w-full"
               />
             </div>
           </div>
@@ -228,21 +332,67 @@ function ValentineContent() {
       </div>
 
       <style jsx global>{`
-        @keyframes fadeIn {
-          from {
+        @keyframes gradient-shift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-30px) rotate(10deg); }
+        }
+        @keyframes float-random {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(20px, -20px) rotate(90deg); }
+          50% { transform: translate(-20px, 20px) rotate(180deg); }
+          75% { transform: translate(20px, 20px) rotate(270deg); }
+        }
+        @keyframes pop-in {
+          0% {
             opacity: 0;
-            transform: scale(0.9);
+            transform: scale(0.8);
           }
-          to {
+          60% {
+            transform: scale(1.05);
+          }
+          100% {
             opacity: 1;
             transform: scale(1);
           }
         }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
-        @keyframes celebrationIn {
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-10px) rotate(-5deg); }
+          75% { transform: translateX(10px) rotate(5deg); }
+        }
+        @keyframes pulse-slow {
+          0%, 100% { transform: scale(1); box-shadow: 0 20px 60px rgba(236, 72, 153, 0.3); }
+          50% { transform: scale(1.05); box-shadow: 0 25px 80px rgba(236, 72, 153, 0.5); }
+        }
+        @keyframes celebration {
+          from {
+            opacity: 0;
+            transform: scale(0.5) rotate(-10deg);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+          }
+        }
+        @keyframes bounce-big {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-40px); }
+        }
+        @keyframes scale-up {
           from {
             opacity: 0;
             transform: scale(0.8);
@@ -252,14 +402,28 @@ function ValentineContent() {
             transform: scale(1);
           }
         }
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
         @keyframes floatUp {
           0% {
+            transform: translateY(0) rotate(0deg) scale(1);
             opacity: 1;
-            transform: translateY(0) rotate(0deg);
           }
           100% {
+            transform: translateY(-150vh) rotate(720deg) scale(1.5);
             opacity: 0;
-            transform: translateY(-100vh) rotate(360deg);
           }
         }
         @keyframes confettiFall {
@@ -268,25 +432,59 @@ function ValentineContent() {
             opacity: 1;
           }
           100% {
-            transform: translateY(100vh) rotate(720deg);
+            transform: translateY(120vh) rotate(720deg);
             opacity: 0;
           }
         }
-        .animate-fadeIn {
-          animation: fadeIn 0.8s ease-out;
+        @keyframes explode {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(
+              calc(cos(var(--angle)) * 150px),
+              calc(sin(var(--angle)) * 150px)
+            ) scale(0);
+            opacity: 0;
+          }
+        }
+        .animate-gradient-shift {
+          background-size: 200% 200%;
+          animation: gradient-shift 10s ease infinite;
         }
         .animate-float {
-          animation: float 3s ease-in-out infinite;
+          animation: float 4s ease-in-out infinite;
         }
-        .animate-celebrationIn {
-          animation: celebrationIn 0.6s ease-out;
+        .animate-float-random {
+          animation: float-random linear infinite;
         }
-        .animate-bounce {
-          animation: bounce 1s ease-in-out infinite;
+        .animate-pop-in {
+          animation: pop-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
+        .animate-slide-down {
+          animation: slide-down 0.6s ease-out;
+        }
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
+        }
+        .animate-celebration {
+          animation: celebration 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .animate-bounce-big {
+          animation: bounce-big 1.5s ease-in-out infinite;
+        }
+        .animate-scale-up {
+          animation: scale-up 0.6s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.6s ease-out;
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out;
         }
       `}</style>
     </div>
@@ -296,10 +494,11 @@ function ValentineContent() {
 export default function ValentinePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{
-        background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%)'
-      }}>
-        <div className="text-2xl text-white">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-400 via-red-400 to-purple-500">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">💕</div>
+          <div className="text-2xl text-white font-bold">Loading magic...</div>
+        </div>
       </div>
     }>
       <ValentineContent />
