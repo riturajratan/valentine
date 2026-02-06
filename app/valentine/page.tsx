@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense, useCallback } from 'react'
+import { useEffect, useState, useRef, Suspense, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 function ValentineContent() {
@@ -12,13 +12,26 @@ function ValentineContent() {
   const [showCelebration, setShowCelebration] = useState(false)
   const [dodgeCount, setDodgeCount] = useState(0)
   const [yesScale, setYesScale] = useState(1)
-  const [noPosition, setNoPosition] = useState({ x: 0, y: 0 })
   const [shake, setShake] = useState(false)
 
   const noBtnRef = useRef<HTMLButtonElement>(null)
+  const yesBtnRef = useRef<HTMLButtonElement>(null)
+  const progressRef = useRef<HTMLDivElement>(null)
   const lastDodgeTimeRef = useRef(0)
   const animationFrameRef = useRef<number | undefined>(undefined)
+  const noPositionRef = useRef({ x: 0, y: 0 })
   const maxDodges = 8
+
+  // Memoize floating hearts to prevent re-creation on every render
+  const floatingHearts = useMemo(() => {
+    return [...Array(20)].map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 10 + Math.random() * 10,
+    }))
+  }, [])
 
   useEffect(() => {
     if (!messageId) {
@@ -32,16 +45,31 @@ function ValentineContent() {
       .then(res => res.json())
       .then(data => {
         if (isMounted && data.success) {
-          setRecipientName(data.message.recipient_name)
-        }
-        if (isMounted) {
-          setLoading(false)
+          // Batch both state updates in a single render cycle
+          const name = data.message.recipient_name
+          requestAnimationFrame(() => {
+            if (isMounted) {
+              // Update both states together
+              setRecipientName(name)
+              setLoading(false)
+            }
+          })
+        } else if (isMounted) {
+          requestAnimationFrame(() => {
+            if (isMounted) {
+              setLoading(false)
+            }
+          })
         }
       })
       .catch(err => {
         console.error('Error:', err)
         if (isMounted) {
-          setLoading(false)
+          requestAnimationFrame(() => {
+            if (isMounted) {
+              setLoading(false)
+            }
+          })
         }
       })
 
@@ -98,20 +126,34 @@ function ValentineContent() {
         newX = Math.max(-rect.left + 20, Math.min(newX, maxX - rect.left))
         newY = Math.max(-rect.top + 20, Math.min(newY, maxY - rect.top))
 
-        setNoPosition({ x: newX, y: newY })
+        // Update position via direct DOM manipulation (NO React re-render!)
+        noPositionRef.current = { x: newX, y: newY }
+        noBtn.style.transform = `translate3d(${newX}px, ${newY}px, 0)`
 
         // Only increment dodge count once per second to avoid too many updates
         const now = Date.now()
         if (now - lastDodgeTimeRef.current > 1000) {
           lastDodgeTimeRef.current = now
-          setDodgeCount(prev => prev + 1)
-          setYesScale(prev => Math.min(prev + 0.2, 2.5))
+          const newDodgeCount = dodgeCount + 1
+          const newYesScale = Math.min(yesScale + 0.2, 2.5)
+
+          // Update via DOM instead of setState to prevent flicker
+          if (yesBtnRef.current) {
+            yesBtnRef.current.style.transform = `scale(${newYesScale})`
+          }
+          if (progressRef.current) {
+            progressRef.current.textContent = `Love is growing stronger! ${Math.round((newYesScale - 1) * 100)}%`
+          }
+
+          // Only update state once (batched)
+          setDodgeCount(newDodgeCount)
+          setYesScale(newYesScale)
           setShake(true)
           setTimeout(() => setShake(false), 500)
         }
       }
     })
-  }, [showCelebration, dodgeCount, maxDodges])
+  }, [showCelebration, dodgeCount, yesScale, maxDodges])
 
   const handleYesClick = async () => {
     setShowCelebration(true)
@@ -242,15 +284,15 @@ function ValentineContent() {
 
       {/* Floating Hearts Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {floatingHearts.map((heart) => (
           <div
-            key={i}
+            key={heart.id}
             className="absolute text-4xl opacity-10 animate-float-random"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${10 + Math.random() * 10}s`,
+              left: `${heart.left}%`,
+              top: `${heart.top}%`,
+              animationDelay: `${heart.delay}s`,
+              animationDuration: `${heart.duration}s`,
             }}
           >
             💕
@@ -292,12 +334,14 @@ function ValentineContent() {
             <div className="flex gap-8 justify-center items-center min-h-[200px] relative">
               {/* Yes Button */}
               <button
+                ref={yesBtnRef}
                 onClick={handleYesClick}
                 className="relative px-16 py-6 rounded-full text-3xl font-black text-white shadow-2xl transition-all duration-300 hover:shadow-pink-500/50 animate-pulse-slow group overflow-hidden"
                 style={{
                   background: 'linear-gradient(135deg, #ec4899 0%, #ef4444 100%)',
                   transform: `scale(${yesScale})`,
                   transformOrigin: 'center',
+                  willChange: 'transform',
                 }}
               >
                 <span className="relative z-10 flex items-center gap-3">
@@ -317,7 +361,7 @@ function ValentineContent() {
                 style={{
                   background: '#e5e7eb',
                   color: '#6b7280',
-                  transform: `translate3d(${noPosition.x}px, ${noPosition.y}px, 0)`,
+                  transform: 'translate3d(0, 0, 0)',
                   opacity: dodgeCount >= maxDodges ? 0.3 : 1,
                   pointerEvents: dodgeCount >= maxDodges ? 'none' : 'auto',
                   transition: 'opacity 0.3s ease',
@@ -335,7 +379,7 @@ function ValentineContent() {
               <div className="mt-8 text-center animate-fade-in">
                 <div className="inline-flex items-center gap-2 px-6 py-3 bg-pink-100 rounded-full">
                   <span className="text-2xl animate-bounce">💘</span>
-                  <span className="text-sm font-semibold text-pink-700">
+                  <span ref={progressRef} className="text-sm font-semibold text-pink-700">
                     Love is growing stronger! {Math.round((yesScale - 1) * 100)}%
                   </span>
                 </div>
