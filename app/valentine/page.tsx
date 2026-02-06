@@ -280,13 +280,14 @@ function ValentineContent() {
               <button
                 ref={noBtnRef}
                 onClick={handleNoClick}
-                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg transition-all duration-200 hover:scale-105"
+                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg hover:scale-105 no-button-smooth"
                 style={{
                   background: '#e5e7eb',
                   color: '#6b7280',
                   transform: `translate(${noPosition.x}px, ${noPosition.y}px)`,
                   opacity: dodgeCount >= maxDodges ? 0.3 : 1,
                   pointerEvents: dodgeCount >= maxDodges ? 'none' : 'auto',
+                  transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease',
                 }}
               >
                 No 😢
@@ -304,6 +305,30 @@ function ValentineContent() {
                 </div>
               </div>
             )}
+
+            {/* Footer with Support Links */}
+            <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+              <p className="text-xs text-gray-500 mb-2">
+                Like this? Support the creator! 💕
+              </p>
+              <div className="flex items-center justify-center gap-2 text-xs">
+                <a
+                  href="/donate"
+                  className="text-pink-600 hover:text-pink-700 hover:underline font-semibold"
+                >
+                  ☕ Donate
+                </a>
+                <span className="text-gray-300">•</span>
+                <a
+                  href="https://buymeacoffee.com/riturajratan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-600 hover:text-purple-700 hover:underline font-semibold"
+                >
+                  Buy Me a Coffee
+                </a>
+              </div>
+            </div>
           </>
         ) : (
           /* Celebration Screen */
@@ -322,10 +347,33 @@ function ValentineContent() {
             </div>
             <div className="relative rounded-2xl overflow-hidden shadow-2xl animate-scale-up border-4 border-pink-300" style={{ animationDelay: '0.3s' }}>
               <img
-                src="https://media.giphy.com/media/g5R9dok94mrIvplmZd/giphy.gif"
-                alt="Celebration"
+                src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGw4anN0dGdvN2Fma2x6aHFxZWRzbWo4ajFkNW5kNWJqYmFqYzZqZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26u4cqiYI30juCOGY/giphy.gif"
+                alt="Love Celebration"
                 className="max-w-full w-full"
               />
+            </div>
+
+            {/* Support Links */}
+            <div className="mt-8 pt-6 border-t border-pink-200 text-center animate-fade-in" style={{ animationDelay: '0.5s' }}>
+              <p className="text-sm text-gray-600 mb-3">
+                Enjoyed this? Support the creator! 💕
+              </p>
+              <div className="flex items-center justify-center gap-3 text-sm">
+                <a
+                  href="/donate"
+                  className="inline-flex items-center gap-1 px-4 py-2 bg-pink-100 text-pink-700 rounded-full hover:bg-pink-200 transition-all font-semibold"
+                >
+                  ☕ Donate
+                </a>
+                <a
+                  href="https://buymeacoffee.com/riturajratan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-4 py-2 bg-purple-100 text-purple-700 rounded-full hover:bg-purple-200 transition-all font-semibold"
+                >
+                  💖 Buy Me a Coffee
+                </a>
+              </div>
             </div>
           </div>
         )}
