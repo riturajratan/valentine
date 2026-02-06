@@ -10,16 +10,21 @@ function ValentineContent() {
   const [recipientName, setRecipientName] = useState('there')
   const [loading, setLoading] = useState(true)
   const [showCelebration, setShowCelebration] = useState(false)
-  const [dodgeCount, setDodgeCount] = useState(0)
-  const [yesScale, setYesScale] = useState(1)
-  const [shake, setShake] = useState(false)
 
   const noBtnRef = useRef<HTMLButtonElement>(null)
   const yesBtnRef = useRef<HTMLButtonElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
+  const messageRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const progressContainerRef = useRef<HTMLDivElement>(null)
+
+  // Use refs instead of state to prevent re-renders
+  const dodgeCountRef = useRef(0)
+  const yesScaleRef = useRef(1)
   const lastDodgeTimeRef = useRef(0)
   const animationFrameRef = useRef<number | undefined>(undefined)
   const noPositionRef = useRef({ x: 0, y: 0 })
+  const shakeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const maxDodges = 8
 
   // Memoize floating hearts to prevent re-creation on every render
@@ -87,7 +92,7 @@ function ValentineContent() {
   }, [])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (showCelebration || dodgeCount >= maxDodges || !noBtnRef.current) return
+    if (showCelebration || dodgeCountRef.current >= maxDodges || !noBtnRef.current) return
 
     // Cancel previous animation frame to prevent buildup
     if (animationFrameRef.current) {
@@ -134,26 +139,56 @@ function ValentineContent() {
         const now = Date.now()
         if (now - lastDodgeTimeRef.current > 1000) {
           lastDodgeTimeRef.current = now
-          const newDodgeCount = dodgeCount + 1
-          const newYesScale = Math.min(yesScale + 0.2, 2.5)
+          dodgeCountRef.current += 1
+          yesScaleRef.current = Math.min(yesScaleRef.current + 0.2, 2.5)
 
-          // Update via DOM instead of setState to prevent flicker
+          const newDodgeCount = dodgeCountRef.current
+          const newYesScale = yesScaleRef.current
+
+          // Update via direct DOM manipulation (NO React re-render!)
           if (yesBtnRef.current) {
             yesBtnRef.current.style.transform = `scale(${newYesScale})`
           }
-          if (progressRef.current) {
+
+          // Update message text
+          if (messageRef.current) {
+            if (newDodgeCount >= maxDodges) {
+              messageRef.current.textContent = "Haha! The No button ran away forever! 😂 Love wins!"
+            } else if (newDodgeCount > 4) {
+              messageRef.current.textContent = `Stop chasing me! 🏃‍♂️💨 Just click YES already! (${newDodgeCount}/${maxDodges})`
+            } else {
+              messageRef.current.textContent = `Catch me if you can! 😜 The No button is too fast for you (${newDodgeCount}/${maxDodges})`
+            }
+          }
+
+          // Show/update progress indicator
+          if (progressContainerRef.current && progressRef.current) {
+            progressContainerRef.current.style.display = 'block'
             progressRef.current.textContent = `Love is growing stronger! ${Math.round((newYesScale - 1) * 100)}%`
           }
 
-          // Only update state once (batched)
-          setDodgeCount(newDodgeCount)
-          setYesScale(newYesScale)
-          setShake(true)
-          setTimeout(() => setShake(false), 500)
+          // Update No button opacity if max dodges reached
+          if (newDodgeCount >= maxDodges && noBtn) {
+            noBtn.style.opacity = '0.3'
+            noBtn.style.pointerEvents = 'none'
+          }
+
+          // Add shake animation to card
+          if (cardRef.current) {
+            cardRef.current.classList.add('animate-shake')
+            if (shakeTimeoutRef.current) {
+              clearTimeout(shakeTimeoutRef.current)
+            }
+            shakeTimeoutRef.current = setTimeout(() => {
+              if (cardRef.current) {
+                cardRef.current.classList.remove('animate-shake')
+              }
+            }, 500)
+          }
         }
       }
     })
-  }, [showCelebration, dodgeCount, yesScale, maxDodges])
+  }, [showCelebration, maxDodges])
 
   const handleYesClick = async () => {
     setShowCelebration(true)
@@ -178,10 +213,44 @@ function ValentineContent() {
 
   const handleNoClick = () => {
     alert("Nice try! But you can't escape love! 💕")
-    setDodgeCount(prev => prev + 1)
-    setYesScale(prev => Math.min(prev + 0.2, 2.5))
-    setShake(true)
-    setTimeout(() => setShake(false), 500)
+
+    dodgeCountRef.current += 1
+    yesScaleRef.current = Math.min(yesScaleRef.current + 0.2, 2.5)
+
+    const newDodgeCount = dodgeCountRef.current
+    const newYesScale = yesScaleRef.current
+
+    // Update via direct DOM manipulation
+    if (yesBtnRef.current) {
+      yesBtnRef.current.style.transform = `scale(${newYesScale})`
+    }
+
+    if (messageRef.current) {
+      if (newDodgeCount >= maxDodges) {
+        messageRef.current.textContent = "Haha! The No button ran away forever! 😂 Love wins!"
+      } else if (newDodgeCount > 4) {
+        messageRef.current.textContent = `Stop chasing me! 🏃‍♂️💨 Just click YES already! (${newDodgeCount}/${maxDodges})`
+      } else {
+        messageRef.current.textContent = `Catch me if you can! 😜 The No button is too fast for you (${newDodgeCount}/${maxDodges})`
+      }
+    }
+
+    if (progressContainerRef.current && progressRef.current) {
+      progressContainerRef.current.style.display = 'block'
+      progressRef.current.textContent = `Love is growing stronger! ${Math.round((newYesScale - 1) * 100)}%`
+    }
+
+    if (cardRef.current) {
+      cardRef.current.classList.add('animate-shake')
+      if (shakeTimeoutRef.current) {
+        clearTimeout(shakeTimeoutRef.current)
+      }
+      shakeTimeoutRef.current = setTimeout(() => {
+        if (cardRef.current) {
+          cardRef.current.classList.remove('animate-shake')
+        }
+      }, 500)
+    }
   }
 
   const createHearts = () => {
@@ -301,7 +370,7 @@ function ValentineContent() {
       </div>
 
       {/* Main Card */}
-      <div className={`relative z-10 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center border-4 border-white/30 ${shake ? 'animate-shake' : 'animate-pop-in'}`}>
+      <div ref={cardRef} className="relative z-10 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center border-4 border-white/30 animate-pop-in">
         {!showCelebration ? (
           <>
             {/* Main Content */}
@@ -316,17 +385,9 @@ function ValentineContent() {
                 Will you be my<br />Valentine?
               </div>
               <div className="text-lg text-gray-600 italic mb-8 animate-slide-down" style={{ animationDelay: '0.2s' }}>
-                {dodgeCount > 0 ? (
-                  <span className="text-pink-600 font-semibold">
-                    {dodgeCount >= maxDodges
-                      ? "Haha! The No button ran away forever! 😂 Love wins!"
-                      : dodgeCount > 4
-                      ? `Stop chasing me! 🏃‍♂️💨 Just click YES already! (${dodgeCount}/${maxDodges})`
-                      : `Catch me if you can! 😜 The No button is too fast for you (${dodgeCount}/${maxDodges})`}
-                  </span>
-                ) : (
-                  <span>Try clicking &quot;No&quot; if you dare... 😈</span>
-                )}
+                <span ref={messageRef} className="text-pink-600 font-semibold">
+                  Try clicking &quot;No&quot; if you dare... 😈
+                </span>
               </div>
             </div>
 
@@ -339,7 +400,7 @@ function ValentineContent() {
                 className="relative px-16 py-6 rounded-full text-3xl font-black text-white shadow-2xl transition-all duration-300 hover:shadow-pink-500/50 animate-pulse-slow group overflow-hidden"
                 style={{
                   background: 'linear-gradient(135deg, #ec4899 0%, #ef4444 100%)',
-                  transform: `scale(${yesScale})`,
+                  transform: 'scale(1)',
                   transformOrigin: 'center',
                   willChange: 'transform',
                 }}
@@ -362,8 +423,8 @@ function ValentineContent() {
                   background: '#e5e7eb',
                   color: '#6b7280',
                   transform: 'translate3d(0, 0, 0)',
-                  opacity: dodgeCount >= maxDodges ? 0.3 : 1,
-                  pointerEvents: dodgeCount >= maxDodges ? 'none' : 'auto',
+                  opacity: 1,
+                  pointerEvents: 'auto',
                   transition: 'opacity 0.3s ease',
                   willChange: 'transform',
                   backfaceVisibility: 'hidden',
@@ -375,16 +436,14 @@ function ValentineContent() {
             </div>
 
             {/* Progress Indicator */}
-            {yesScale > 1 && (
-              <div className="mt-8 text-center animate-fade-in">
-                <div className="inline-flex items-center gap-2 px-6 py-3 bg-pink-100 rounded-full">
-                  <span className="text-2xl animate-bounce">💘</span>
-                  <span ref={progressRef} className="text-sm font-semibold text-pink-700">
-                    Love is growing stronger! {Math.round((yesScale - 1) * 100)}%
-                  </span>
-                </div>
+            <div ref={progressContainerRef} className="mt-8 text-center animate-fade-in" style={{ display: 'none' }}>
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-pink-100 rounded-full">
+                <span className="text-2xl animate-bounce">💘</span>
+                <span ref={progressRef} className="text-sm font-semibold text-pink-700">
+                  Love is growing stronger! 0%
+                </span>
               </div>
-            )}
+            </div>
 
             {/* Footer with Support Links */}
             <div className="mt-8 pt-6 border-t border-gray-200 text-center">
