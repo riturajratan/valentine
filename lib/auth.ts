@@ -1,10 +1,11 @@
-import NextAuth, { NextAuthOptions } from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
+import NextAuth from 'next-auth'
+import Google from 'next-auth/providers/google'
 import { supabaseAdmin } from './supabase-admin'
 
-export const authOptions: NextAuthOptions = {
+// Export auth for middleware usage in NextAuth v5
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    GoogleProvider({
+    Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
@@ -89,7 +90,4 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
-}
-
-// Export auth for middleware usage in NextAuth v5
-export const { handlers, auth, signIn, signOut } = NextAuth(authOptions)
+})
