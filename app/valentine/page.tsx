@@ -14,9 +14,10 @@ function ValentineContent() {
   const [yesScale, setYesScale] = useState(1)
   const [noPosition, setNoPosition] = useState({ x: 0, y: 0 })
   const [shake, setShake] = useState(false)
-  const [lastDodgeTime, setLastDodgeTime] = useState(0)
 
   const noBtnRef = useRef<HTMLButtonElement>(null)
+  const lastDodgeTimeRef = useRef(0)
+  const animationFrameRef = useRef<number | undefined>(undefined)
   const maxDodges = 8
 
   useEffect(() => {
@@ -25,65 +26,92 @@ function ValentineContent() {
       return
     }
 
+    let isMounted = true
+
     fetch(`/api/message?id=${messageId}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
+        if (isMounted && data.success) {
           setRecipientName(data.message.recipient_name)
         }
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       })
       .catch(err => {
         console.error('Error:', err)
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       })
+
+    return () => {
+      isMounted = false
+    }
   }, [messageId])
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (showCelebration || dodgeCount >= maxDodges || !noBtnRef.current) return
-
-    const noBtn = noBtnRef.current
-    const rect = noBtn.getBoundingClientRect()
-    const noBtnCenterX = rect.left + rect.width / 2
-    const noBtnCenterY = rect.top + rect.height / 2
-
-    const distance = Math.sqrt(
-      Math.pow(e.clientX - noBtnCenterX, 2) +
-      Math.pow(e.clientY - noBtnCenterY, 2)
-    )
-
-    // ALWAYS move the button away from cursor (continuous tracking)
-    const angle = Math.atan2(
-      noBtnCenterY - e.clientY,
-      noBtnCenterX - e.clientX
-    )
-
-    // Keep button at a minimum distance from cursor
-    const minDistance = 180
-    if (distance < minDistance) {
-      const moveDistance = minDistance - distance + 50
-      let newX = Math.cos(angle) * moveDistance
-      let newY = Math.sin(angle) * moveDistance
-
-      const maxX = window.innerWidth - rect.width - 50
-      const maxY = window.innerHeight - rect.height - 50
-
-      newX = Math.max(-rect.left + 20, Math.min(newX, maxX - rect.left))
-      newY = Math.max(-rect.top + 20, Math.min(newY, maxY - rect.top))
-
-      setNoPosition({ x: newX, y: newY })
-
-      // Only increment dodge count once per second to avoid too many updates
-      const now = Date.now()
-      if (now - lastDodgeTime > 1000) {
-        setLastDodgeTime(now)
-        setDodgeCount(prev => prev + 1)
-        setYesScale(prev => Math.min(prev + 0.2, 2.5))
-        setShake(true)
-        setTimeout(() => setShake(false), 500)
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }
+  }, [])
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (showCelebration || dodgeCount >= maxDodges || !noBtnRef.current) return
+
+    // Cancel previous animation frame to prevent buildup
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+    }
+
+    animationFrameRef.current = requestAnimationFrame(() => {
+      if (!noBtnRef.current) return
+
+      const noBtn = noBtnRef.current
+      const rect = noBtn.getBoundingClientRect()
+      const noBtnCenterX = rect.left + rect.width / 2
+      const noBtnCenterY = rect.top + rect.height / 2
+
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - noBtnCenterX, 2) +
+        Math.pow(e.clientY - noBtnCenterY, 2)
+      )
+
+      // ALWAYS move the button away from cursor (continuous tracking)
+      const angle = Math.atan2(
+        noBtnCenterY - e.clientY,
+        noBtnCenterX - e.clientX
+      )
+
+      // Keep button at a minimum distance from cursor
+      const minDistance = 180
+      if (distance < minDistance) {
+        const moveDistance = minDistance - distance + 50
+        let newX = Math.cos(angle) * moveDistance
+        let newY = Math.sin(angle) * moveDistance
+
+        const maxX = window.innerWidth - rect.width - 50
+        const maxY = window.innerHeight - rect.height - 50
+
+        newX = Math.max(-rect.left + 20, Math.min(newX, maxX - rect.left))
+        newY = Math.max(-rect.top + 20, Math.min(newY, maxY - rect.top))
+
+        setNoPosition({ x: newX, y: newY })
+
+        // Only increment dodge count once per second to avoid too many updates
+        const now = Date.now()
+        if (now - lastDodgeTimeRef.current > 1000) {
+          lastDodgeTimeRef.current = now
+          setDodgeCount(prev => prev + 1)
+          setYesScale(prev => Math.min(prev + 0.2, 2.5))
+          setShake(true)
+          setTimeout(() => setShake(false), 500)
+        }
+      }
+    })
+  }, [showCelebration, dodgeCount, maxDodges])
 
   const handleYesClick = async () => {
     setShowCelebration(true)
