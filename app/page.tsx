@@ -245,9 +245,24 @@ export default function Home() {
 
         {/* Footer */}
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 mb-3">
             Made with <span className="text-red-500 animate-pulse">❤️</span> for spreading love
           </p>
+          <a
+            href="/donate"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-pink-600 hover:text-pink-700 hover:underline transition-all"
+          >
+            ☕ Buy me a coffee
+          </a>
+          <span className="text-gray-300 mx-2">•</span>
+          <a
+            href="https://buymeacoffee.com/riturajratan"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline transition-all"
+          >
+            Support this project ✨
+          </a>
         </div>
       </div>
 

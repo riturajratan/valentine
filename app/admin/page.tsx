@@ -278,9 +278,26 @@ export default function AdminDashboard() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-gray-500">
-          <p className="text-sm">
+          <p className="text-sm mb-2">
             Made with <span className="text-red-500 animate-pulse">❤️</span> for spreading love
           </p>
+          <div className="flex items-center justify-center gap-3 text-xs">
+            <a
+              href="/donate"
+              className="text-pink-600 hover:text-pink-700 hover:underline font-semibold"
+            >
+              ☕ Donate
+            </a>
+            <span className="text-gray-300">•</span>
+            <a
+              href="https://buymeacoffee.com/riturajratan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-purple-600 hover:text-purple-700 hover:underline font-semibold"
+            >
+              Buy Me a Coffee
+            </a>
+          </div>
         </div>
       </div>
     </div>
