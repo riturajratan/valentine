@@ -24,7 +24,6 @@ export default function AdminDashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check authentication
     const auth = sessionStorage.getItem('adminAuth')
     if (auth !== 'true') {
       router.push('/admin/login')
@@ -37,7 +36,6 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      // Fetch all messages
       const { data: messagesData, error } = await supabase
         .from('messages')
         .select('*')
@@ -51,7 +49,6 @@ export default function AdminDashboard() {
 
       setMessages(messagesData || [])
 
-      // Calculate stats
       const totalMessages = messagesData?.length || 0
       const totalClicks = messagesData?.filter(m => m.clicked).length || 0
       const conversionRate = totalMessages > 0 ? (totalClicks / totalMessages) * 100 : 0
@@ -78,137 +75,184 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-2xl text-gray-600">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-400 via-pink-400 to-red-400">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-bounce">📊</div>
+          <div className="text-2xl text-white font-bold">Loading dashboard...</div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-5">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-5">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-2xl shadow-2xl p-8 mb-8 text-white">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-              <p className="text-gray-600 mt-1">Valentine Message Analytics</p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="text-5xl">📊</div>
+                <h1 className="text-4xl font-black">Admin Dashboard</h1>
+              </div>
+              <p className="text-pink-100 text-lg font-medium">Valentine Message Analytics & Tracking</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
-            >
-              Logout
-            </button>
+            <div className="flex gap-4">
+              <a
+                href="/"
+                className="px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all font-semibold border border-white/30"
+              >
+                🏠 Home
+              </a>
+              <button
+                onClick={handleLogout}
+                className="px-6 py-3 bg-white text-red-600 rounded-xl hover:bg-red-50 transition-all font-bold shadow-lg"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm font-semibold uppercase">Total Messages</p>
-                <p className="text-3xl font-bold text-gray-800 mt-2">{stats.totalMessages}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Messages */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all cursor-pointer">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-5xl">💌</div>
+              <div className="px-3 py-1 bg-white/20 rounded-full text-sm font-bold backdrop-blur-sm">
+                Total
               </div>
-              <div className="text-4xl">💌</div>
             </div>
+            <p className="text-blue-100 text-sm font-semibold uppercase tracking-wide mb-2">
+              Messages Generated
+            </p>
+            <p className="text-5xl font-black">{stats.totalMessages}</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm font-semibold uppercase">Total Clicks</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{stats.totalClicks}</p>
+          {/* Total Clicks */}
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all cursor-pointer">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-5xl">💖</div>
+              <div className="px-3 py-1 bg-white/20 rounded-full text-sm font-bold backdrop-blur-sm">
+                Success
               </div>
-              <div className="text-4xl">💖</div>
             </div>
+            <p className="text-green-100 text-sm font-semibold uppercase tracking-wide mb-2">
+              Yes Clicks
+            </p>
+            <p className="text-5xl font-black">{stats.totalClicks}</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm font-semibold uppercase">Conversion Rate</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">
-                  {stats.conversionRate.toFixed(1)}%
-                </p>
+          {/* Conversion Rate */}
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all cursor-pointer">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-5xl">📈</div>
+              <div className="px-3 py-1 bg-white/20 rounded-full text-sm font-bold backdrop-blur-sm">
+                Rate
               </div>
-              <div className="text-4xl">📊</div>
             </div>
+            <p className="text-purple-100 text-sm font-semibold uppercase tracking-wide mb-2">
+              Conversion Rate
+            </p>
+            <p className="text-5xl font-black">{stats.conversionRate.toFixed(1)}%</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-500 text-sm font-semibold uppercase">Unique Senders</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">{stats.uniqueSenders}</p>
+          {/* Unique Senders */}
+          <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition-all cursor-pointer">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-5xl">👥</div>
+              <div className="px-3 py-1 bg-white/20 rounded-full text-sm font-bold backdrop-blur-sm">
+                Users
               </div>
-              <div className="text-4xl">👥</div>
             </div>
+            <p className="text-pink-100 text-sm font-semibold uppercase tracking-wide mb-2">
+              Unique Senders
+            </p>
+            <p className="text-5xl font-black">{stats.uniqueSenders}</p>
           </div>
         </div>
 
         {/* Messages Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800">All Messages</h2>
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
+            <h2 className="text-2xl font-black text-white flex items-center gap-3">
+              <span className="text-3xl">📋</span>
+              All Valentine Messages
+            </h2>
+            <p className="text-purple-100 mt-1">Track all generated links and their status</p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 border-b-2 border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Recipient
+                  <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-wider">
+                    💝 Recipient
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sender Email
+                  <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-wider">
+                    📧 Sender Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sender Name
+                  <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-wider">
+                    👤 Sender Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created At
+                  <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-wider">
+                    📅 Created
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                  <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-wider">
+                    ✨ Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Clicked At
+                  <th className="px-6 py-4 text-left text-xs font-black text-gray-600 uppercase tracking-wider">
+                    ⏰ Clicked At
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {messages.map((message) => (
-                  <tr key={message.id} className="hover:bg-gray-50">
+              <tbody className="bg-white divide-y divide-gray-100">
+                {messages.map((message, index) => (
+                  <tr key={message.id} className="hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-all">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{message.recipient_name}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">💕</span>
+                        <div className="text-sm font-bold text-gray-900">{message.recipient_name}</div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">{message.sender_email}</div>
+                      <div className="text-sm text-gray-600 font-medium">{message.sender_email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">{message.sender_name || '-'}</div>
+                      <div className="text-sm text-gray-600 font-medium">{message.sender_name || '—'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-600">
-                        {new Date(message.created_at).toLocaleString()}
+                        {new Date(message.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {message.clicked ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          Clicked
+                        <span className="px-4 py-2 inline-flex items-center gap-2 text-xs font-black rounded-full bg-gradient-to-r from-green-400 to-green-500 text-white shadow-md">
+                          <span className="text-base">✓</span>
+                          Clicked YES!
                         </span>
                       ) : (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                          Pending
+                        <span className="px-4 py-2 inline-flex items-center gap-2 text-xs font-black rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-md">
+                          <span className="text-base">⏳</span>
+                          Waiting...
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-600">
-                        {message.clicked_at ? new Date(message.clicked_at).toLocaleString() : '-'}
+                        {message.clicked_at ? new Date(message.clicked_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : '—'}
                       </div>
                     </td>
                   </tr>
@@ -218,10 +262,25 @@ export default function AdminDashboard() {
           </div>
 
           {messages.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No messages yet</p>
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">💔</div>
+              <p className="text-gray-500 text-xl font-semibold mb-2">No messages yet</p>
+              <p className="text-gray-400">Create your first Valentine message to see it here!</p>
+              <a
+                href="/"
+                className="inline-block mt-6 px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold rounded-xl hover:shadow-xl transition-all"
+              >
+                Create Message
+              </a>
             </div>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-gray-500">
+          <p className="text-sm">
+            Made with <span className="text-red-500 animate-pulse">❤️</span> for spreading love
+          </p>
         </div>
       </div>
     </div>
