@@ -51,8 +51,9 @@ function ValentineContent() {
       Math.pow(e.clientY - noBtnCenterY, 2)
     )
 
-    if (distance < 150) {
-      moveNoButton(e.clientX, e.clientY)
+    // Increased detection range and more aggressive dodging
+    if (distance < 200) {
+      moveNoButton(e.clientX, e.clientY, distance)
       setDodgeCount(prev => prev + 1)
       setYesScale(prev => Math.min(prev + 0.2, 2.5))
       setShake(true)
@@ -60,7 +61,7 @@ function ValentineContent() {
     }
   }
 
-  const moveNoButton = (mouseX: number, mouseY: number) => {
+  const moveNoButton = (mouseX: number, mouseY: number, currentDistance: number) => {
     if (!noBtnRef.current) return
 
     const rect = noBtnRef.current.getBoundingClientRect()
@@ -69,7 +70,9 @@ function ValentineContent() {
       rect.left + rect.width / 2 - mouseX
     )
 
-    const distance = 150 + Math.random() * 100
+    // More aggressive dodging - moves further away based on how close cursor is
+    const dodgeIntensity = Math.max(200, 400 - currentDistance)
+    const distance = dodgeIntensity + Math.random() * 100
     let newX = Math.cos(angle) * distance
     let newY = Math.sin(angle) * distance
 
@@ -246,11 +249,13 @@ function ValentineContent() {
                 {dodgeCount > 0 ? (
                   <span className="text-pink-600 font-semibold">
                     {dodgeCount >= maxDodges
-                      ? "The No button gave up! 😂 Just say yes already!"
-                      : `Nice try... but "No" is shy today! 😏 (${dodgeCount}/${maxDodges} attempts)`}
+                      ? "Haha! The No button ran away forever! 😂 Love wins!"
+                      : dodgeCount > 4
+                      ? `Stop chasing me! 🏃‍♂️💨 Just click YES already! (${dodgeCount}/${maxDodges})`
+                      : `Catch me if you can! 😜 The No button is too fast for you (${dodgeCount}/${maxDodges})`}
                   </span>
                 ) : (
-                  <span>&quot;No&quot; seems a bit shy today... 😈</span>
+                  <span>Try clicking &quot;No&quot; if you dare... 😈</span>
                 )}
               </div>
             </div>
@@ -334,16 +339,16 @@ function ValentineContent() {
           /* Celebration Screen */
           <div className="animate-celebration">
             <div className="text-9xl mb-8 animate-bounce-big inline-block">
-              🎉
+              💝
             </div>
-            <h1 className="text-7xl font-black mb-6 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent animate-scale-up">
-              YAYYY! 🎊
+            <h1 className="text-6xl md:text-7xl font-black mb-6 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent animate-scale-up leading-tight">
+              Ohh Wow! 😍
             </h1>
-            <p className="text-3xl text-gray-700 mb-8 font-bold animate-slide-up">
-              They said YES! 💖
+            <p className="text-3xl md:text-4xl text-gray-700 mb-4 font-bold animate-slide-up">
+              You said YES! 💖
             </p>
-            <div className="text-xl text-gray-600 mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              Love is in the air! ✨
+            <div className="text-xl md:text-2xl text-pink-600 mb-8 animate-slide-up font-semibold italic" style={{ animationDelay: '0.2s' }}>
+              Two hearts, one beautiful story ✨
             </div>
             <div className="relative rounded-2xl overflow-hidden shadow-2xl animate-scale-up border-4 border-pink-300" style={{ animationDelay: '0.3s' }}>
               <img
@@ -353,9 +358,6 @@ function ValentineContent() {
                 style={{ maxHeight: '400px', objectFit: 'cover' }}
               />
             </div>
-            <p className="text-lg text-gray-600 mt-6 italic animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              💌 Your sender will receive an email notification!
-            </p>
 
             {/* Support Links */}
             <div className="mt-8 pt-6 border-t border-pink-200 text-center animate-fade-in" style={{ animationDelay: '0.5s' }}>
