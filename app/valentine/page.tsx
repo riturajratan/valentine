@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function ValentinePage() {
+function ValentineContent() {
   const searchParams = useSearchParams()
   const messageId = searchParams.get('id')
 
@@ -290,5 +290,19 @@ export default function ValentinePage() {
         }
       `}</style>
     </div>
+  )
+}
+
+export default function ValentinePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{
+        background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #ffecd2 100%)'
+      }}>
+        <div className="text-2xl text-white">Loading...</div>
+      </div>
+    }>
+      <ValentineContent />
+    </Suspense>
   )
 }
