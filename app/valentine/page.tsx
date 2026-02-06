@@ -313,15 +313,17 @@ function ValentineContent() {
               <button
                 ref={noBtnRef}
                 onClick={handleNoClick}
-                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg"
+                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg select-none"
                 style={{
                   background: '#e5e7eb',
                   color: '#6b7280',
-                  transform: `translate(${noPosition.x}px, ${noPosition.y}px)`,
+                  transform: `translate3d(${noPosition.x}px, ${noPosition.y}px, 0)`,
                   opacity: dodgeCount >= maxDodges ? 0.3 : 1,
                   pointerEvents: dodgeCount >= maxDodges ? 'none' : 'auto',
-                  transition: 'transform 0.15s ease-out, opacity 0.3s ease',
+                  transition: 'opacity 0.3s ease',
                   willChange: 'transform',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
                 }}
               >
                 No 😢

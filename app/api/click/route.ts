@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       const fromEmail = process.env.RESEND_FROM_EMAIL ||
                         'noreply@maddyzone.com'
       const fromName = process.env.RESEND_FROM_NAME ||
-                       'Valentine App'
+                       'Be My Valentine'
 
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
