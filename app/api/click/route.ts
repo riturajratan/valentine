@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         : ''
 
       const fromEmail = process.env.RESEND_FROM_EMAIL ||
-                        'noreply@bemyvalentine.maddyzone.com'
+                        'noreply@maddyzone.com'
       const fromName = process.env.RESEND_FROM_NAME ||
                        'Valentine App'
 
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
             </p>
           </div>
           <p style="margin-top: 30px; font-size: 14px; color: #999; text-align: center;">
-            Sent via <a href="https://bemyvalentine.maddyzone.com" style="color: #ff6b9d; text-decoration: none;">Valentine Message Generator</a> 💕
+            Sent via <a href="https://maddyzone.com" style="color: #ff6b9d; text-decoration: none;">Valentine Message Generator</a> 💕
           </p>
         </div>
       `
