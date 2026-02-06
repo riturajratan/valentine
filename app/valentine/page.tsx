@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense, useMemo } from 'react'
+import { useEffect, useState, useRef, Suspense, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 function ValentineContent() {
@@ -15,9 +15,7 @@ function ValentineContent() {
   const yesBtnRef = useRef<HTMLButtonElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
   const messageRef = useRef<HTMLDivElement>(null)
-  const cardRef = useRef<HTMLDivElement>(null)
   const progressContainerRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
   // Use refs instead of state to prevent re-renders
   const showCelebrationRef = useRef(false)
@@ -26,8 +24,6 @@ function ValentineContent() {
   const lastDodgeTimeRef = useRef(0)
   const animationFrameRef = useRef<number | undefined>(undefined)
   const noPositionRef = useRef({ x: 0, y: 0 })
-  const shakeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
-  const maxDodges = 8
 
   // Memoize floating hearts to prevent re-creation on every render
   const floatingHearts = useMemo(() => {
@@ -72,128 +68,96 @@ function ValentineContent() {
     }
   }, [messageId])
 
-  // Native mouse move handler - bypasses React event system completely
+  // Cleanup effect for animation frames
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (showCelebrationRef.current || dodgeCountRef.current >= maxDodges || !noBtnRef.current) return
-
-      // Cancel previous animation frame to prevent buildup
+    return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
+    }
+  }, [])
 
-      animationFrameRef.current = requestAnimationFrame(() => {
-        if (!noBtnRef.current) return
+  // Mouse move handler - memoized to never change, uses only refs
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (showCelebrationRef.current || !noBtnRef.current) return
 
-        const noBtn = noBtnRef.current
-        const rect = noBtn.getBoundingClientRect()
-        const noBtnCenterX = rect.left + rect.width / 2
-        const noBtnCenterY = rect.top + rect.height / 2
+    // Cancel previous animation frame to prevent buildup
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+    }
 
-        const distance = Math.sqrt(
-          Math.pow(e.clientX - noBtnCenterX, 2) +
-          Math.pow(e.clientY - noBtnCenterY, 2)
-        )
+    animationFrameRef.current = requestAnimationFrame(() => {
+      if (!noBtnRef.current) return
 
-        // ALWAYS move the button away from cursor (continuous tracking)
-        const angle = Math.atan2(
-          noBtnCenterY - e.clientY,
-          noBtnCenterX - e.clientX
-        )
+      const noBtn = noBtnRef.current
+      const rect = noBtn.getBoundingClientRect()
+      const noBtnCenterX = rect.left + rect.width / 2
+      const noBtnCenterY = rect.top + rect.height / 2
 
-        // Keep button at a minimum distance from cursor
-        const minDistance = 180
-        if (distance < minDistance) {
-          const moveDistance = minDistance - distance + 50
-          let newX = Math.cos(angle) * moveDistance
-          let newY = Math.sin(angle) * moveDistance
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - noBtnCenterX, 2) +
+        Math.pow(e.clientY - noBtnCenterY, 2)
+      )
 
-          const maxX = window.innerWidth - rect.width - 50
-          const maxY = window.innerHeight - rect.height - 50
+      // ALWAYS move the button away from cursor (continuous tracking)
+      const angle = Math.atan2(
+        noBtnCenterY - e.clientY,
+        noBtnCenterX - e.clientX
+      )
 
-          newX = Math.max(-rect.left + 20, Math.min(newX, maxX - rect.left))
-          newY = Math.max(-rect.top + 20, Math.min(newY, maxY - rect.top))
+      // Keep button at a minimum distance from cursor - smooth continuous movement
+      const minDistance = 150
+      if (distance < minDistance) {
+        const moveDistance = minDistance - distance + 40
+        let newX = Math.cos(angle) * moveDistance
+        let newY = Math.sin(angle) * moveDistance
 
-          // Update position via direct DOM manipulation (NO React re-render!)
-          noPositionRef.current = { x: newX, y: newY }
-          noBtn.style.transform = `translate3d(${newX}px, ${newY}px, 0)`
+        const maxX = window.innerWidth - rect.width - 50
+        const maxY = window.innerHeight - rect.height - 50
 
-          // Only increment dodge count once per second to avoid too many updates
-          const now = Date.now()
-          if (now - lastDodgeTimeRef.current > 1000) {
-            lastDodgeTimeRef.current = now
-            dodgeCountRef.current += 1
-            yesScaleRef.current = Math.min(yesScaleRef.current + 0.2, 2.5)
+        newX = Math.max(-rect.left + 20, Math.min(newX, maxX - rect.left))
+        newY = Math.max(-rect.top + 20, Math.min(newY, maxY - rect.top))
 
-            const newDodgeCount = dodgeCountRef.current
-            const newYesScale = yesScaleRef.current
+        // Update position via direct DOM manipulation with smooth transition
+        noPositionRef.current = { x: newX, y: newY }
+        noBtn.style.transition = 'transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        noBtn.style.transform = `translate3d(${newX}px, ${newY}px, 0)`
 
-            // Update via direct DOM manipulation (NO React re-render!)
-            if (yesBtnRef.current) {
-              yesBtnRef.current.style.transform = `scale(${newYesScale})`
-            }
+        // Only increment dodge count once per second to avoid too many updates
+        const now = Date.now()
+        if (now - lastDodgeTimeRef.current > 1000) {
+          lastDodgeTimeRef.current = now
+          dodgeCountRef.current += 1
+          yesScaleRef.current = Math.min(yesScaleRef.current + 0.2, 2.5)
 
-            // Update message text
-            if (messageRef.current) {
-              if (newDodgeCount >= maxDodges) {
-                messageRef.current.textContent = "Haha! The No button ran away forever! 😂 Love wins!"
-              } else if (newDodgeCount > 4) {
-                messageRef.current.textContent = `Stop chasing me! 🏃‍♂️💨 Just click YES already! (${newDodgeCount}/${maxDodges})`
-              } else {
-                messageRef.current.textContent = `Catch me if you can! 😜 The No button is too fast for you (${newDodgeCount}/${maxDodges})`
-              }
-            }
+          const newDodgeCount = dodgeCountRef.current
+          const newYesScale = yesScaleRef.current
 
-            // Show/update progress indicator
-            if (progressContainerRef.current && progressRef.current) {
-              progressContainerRef.current.style.display = 'block'
-              progressRef.current.textContent = `Love is growing stronger! ${Math.round((newYesScale - 1) * 100)}%`
-            }
+          // Update via direct DOM manipulation (NO React re-render!)
+          if (yesBtnRef.current) {
+            yesBtnRef.current.style.transform = `scale(${newYesScale})`
+          }
 
-            // Update No button opacity if max dodges reached
-            if (newDodgeCount >= maxDodges && noBtn) {
-              noBtn.style.opacity = '0.3'
-              noBtn.style.pointerEvents = 'none'
-            }
-
-            // Add shake animation to card
-            if (cardRef.current) {
-              cardRef.current.classList.add('animate-shake')
-              if (shakeTimeoutRef.current) {
-                clearTimeout(shakeTimeoutRef.current)
-              }
-              shakeTimeoutRef.current = setTimeout(() => {
-                if (cardRef.current) {
-                  cardRef.current.classList.remove('animate-shake')
-                }
-              }, 500)
+          // Update message text
+          if (messageRef.current) {
+            if (newDodgeCount > 10) {
+              messageRef.current.textContent = `Still chasing? 😂 Just give up and click YES! (Attempts: ${newDodgeCount})`
+            } else if (newDodgeCount > 5) {
+              messageRef.current.textContent = `Stop chasing me! 🏃‍♂️💨 Just click YES already! (Attempts: ${newDodgeCount})`
+            } else {
+              messageRef.current.textContent = `Catch me if you can! 😜 The No button is too fast for you (Attempts: ${newDodgeCount})`
             }
           }
+
+          // Show/update progress indicator
+          if (progressContainerRef.current && progressRef.current) {
+            progressContainerRef.current.style.display = 'block'
+            progressRef.current.textContent = `Love is growing stronger! ${Math.round((newYesScale - 1) * 100)}%`
+          }
         }
-      })
-    }
-
-    // Only attach after loading is complete
-    if (loading) return
-
-    // Store container reference for cleanup
-    const container = containerRef.current
-
-    // Attach native event listener (bypasses React's synthetic events)
-    if (container) {
-      container.addEventListener('mousemove', handleMouseMove, { passive: true })
-    }
-
-    return () => {
-      // Cleanup - use stored reference
-      if (container) {
-        container.removeEventListener('mousemove', handleMouseMove)
       }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-    }
-  }, [loading])
+    })
+  }, []) // Empty deps = function created once, never changes
 
   const handleYesClick = async () => {
     setShowCelebration(true)
@@ -232,30 +196,18 @@ function ValentineContent() {
     }
 
     if (messageRef.current) {
-      if (newDodgeCount >= maxDodges) {
-        messageRef.current.textContent = "Haha! The No button ran away forever! 😂 Love wins!"
-      } else if (newDodgeCount > 4) {
-        messageRef.current.textContent = `Stop chasing me! 🏃‍♂️💨 Just click YES already! (${newDodgeCount}/${maxDodges})`
+      if (newDodgeCount > 10) {
+        messageRef.current.textContent = `Still chasing? 😂 Just give up and click YES! (Attempts: ${newDodgeCount})`
+      } else if (newDodgeCount > 5) {
+        messageRef.current.textContent = `Stop chasing me! 🏃‍♂️💨 Just click YES already! (Attempts: ${newDodgeCount})`
       } else {
-        messageRef.current.textContent = `Catch me if you can! 😜 The No button is too fast for you (${newDodgeCount}/${maxDodges})`
+        messageRef.current.textContent = `Catch me if you can! 😜 The No button is too fast for you (Attempts: ${newDodgeCount})`
       }
     }
 
     if (progressContainerRef.current && progressRef.current) {
       progressContainerRef.current.style.display = 'block'
       progressRef.current.textContent = `Love is growing stronger! ${Math.round((newYesScale - 1) * 100)}%`
-    }
-
-    if (cardRef.current) {
-      cardRef.current.classList.add('animate-shake')
-      if (shakeTimeoutRef.current) {
-        clearTimeout(shakeTimeoutRef.current)
-      }
-      shakeTimeoutRef.current = setTimeout(() => {
-        if (cardRef.current) {
-          cardRef.current.classList.remove('animate-shake')
-        }
-      }, 500)
     }
   }
 
@@ -351,8 +303,8 @@ function ValentineContent() {
 
   return (
     <div
-      ref={containerRef}
       className="min-h-screen flex items-center justify-center p-5 overflow-hidden relative"
+      onMouseMove={handleMouseMove}
     >
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-pink-300 via-purple-300 to-red-300 animate-gradient-shift"></div>
@@ -376,7 +328,7 @@ function ValentineContent() {
       </div>
 
       {/* Main Card */}
-      <div ref={cardRef} className="relative z-10 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center border-4 border-white/30 animate-pop-in">
+      <div className="relative z-10 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl p-12 max-w-2xl w-full text-center border-4 border-white/30 animate-pop-in">
         {!showCelebration ? (
           <>
             {/* Main Content */}
@@ -409,6 +361,7 @@ function ValentineContent() {
                   transform: 'scale(1)',
                   transformOrigin: 'center',
                   willChange: 'transform',
+                  zIndex: 1,
                 }}
               >
                 <span className="relative z-10 flex items-center gap-3">
@@ -424,17 +377,16 @@ function ValentineContent() {
               <button
                 ref={noBtnRef}
                 onClick={handleNoClick}
-                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg select-none"
+                className="absolute px-12 py-5 rounded-full text-2xl font-bold shadow-lg select-none cursor-pointer"
                 style={{
                   background: '#e5e7eb',
                   color: '#6b7280',
                   transform: 'translate3d(0, 0, 0)',
-                  opacity: 1,
-                  pointerEvents: 'auto',
-                  transition: 'opacity 0.3s ease',
                   willChange: 'transform',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
+                  zIndex: 10,
+                  isolation: 'isolate',
                 }}
               >
                 No 😢
