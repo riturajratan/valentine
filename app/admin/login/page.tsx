@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
     setLoading(true)
     setError('')
 
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD || password === 'admin123') {
+    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD || password === 'Rajarani@945#') {
       // Store in session storage
       sessionStorage.setItem('adminAuth', 'true')
       router.push('/admin')

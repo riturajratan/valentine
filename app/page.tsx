@@ -237,7 +237,6 @@ export default function Home() {
               <p className="text-sm text-gray-700 leading-relaxed">
                 <strong className="text-pink-600">💡 What's next?</strong><br />
                 When they click "YES", you'll receive an instant email notification!
-                Plus, you can track everything in the <a href="/admin" className="text-purple-600 hover:underline font-semibold">Admin Dashboard</a>
               </p>
             </div>
           </div>
