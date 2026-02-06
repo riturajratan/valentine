@@ -20,7 +20,7 @@ export default function Home() {
 
   useEffect(() => {
     // Generate floating hearts
-    const hearts = Array.from({ length: 15 }, (_, i) => ({
+    const hearts = Array.from({ length: 8 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 5,
@@ -110,131 +110,124 @@ export default function Home() {
       ))}
 
       {/* Main Content Card */}
-      <div className="relative z-10 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-10 max-w-xl w-full border border-white/20 animate-slide-up">
+      <div className="relative z-10 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-12 max-w-4xl w-full border border-white/20 animate-slide-up">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-block relative">
-            <div className="text-8xl mb-4 animate-bounce-slow cursor-pointer hover:scale-110 transition-transform">
-              💌
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex-1">
+              <h1 className="text-3xl md:text-5xl font-black mb-2 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent">
+                Valentine Generator 💌
+              </h1>
+              <p className="text-gray-600 text-sm md:text-base">
+                Create a playful Valentine message!
+              </p>
             </div>
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full animate-ping"></div>
-          </div>
-          <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-pink-600 via-red-500 to-purple-600 bg-clip-text text-transparent">
-            Valentine Generator
-          </h1>
-          <p className="text-gray-600 text-lg leading-relaxed">
-            Create a playful Valentine message that will <br />
-            <span className="font-semibold text-pink-600">make their heart skip a beat!</span> 💕
-          </p>
-        </div>
 
-        {/* Auth Status Bar */}
-        {status === 'authenticated' ? (
-          <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {session.user.image && (
-                  <img
-                    src={session.user.image}
-                    alt=""
-                    className="w-10 h-10 rounded-full border-2 border-green-300"
-                  />
-                )}
-                <div>
-                  <p className="font-bold text-green-700">
-                    Signed in as {session.user.name || session.user.email}
-                  </p>
-                  {rateLimitRemaining !== null && (
-                    <p className="text-sm text-green-600">
-                      {rateLimitRemaining} messages remaining today
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-2">
+            {/* Auth Actions - Desktop */}
+            {status === 'authenticated' ? (
+              <div className="hidden md:flex gap-2 flex-shrink-0">
                 <a
                   href="/dashboard"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 transition-all font-semibold shadow-md hover:scale-105"
+                  className="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl hover:bg-purple-200 transition-all font-semibold text-sm"
                 >
-                  📋 My Links
+                  My Links
                 </a>
                 <SignInButton />
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-6 p-4 bg-pink-50 border-2 border-pink-200 rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold text-pink-700">Sign in to create messages</p>
-                <p className="text-sm text-pink-600">Create up to 5 messages per day</p>
+            ) : (
+              <div className="hidden md:block">
+                <SignInButton />
               </div>
-              <SignInButton />
-            </div>
+            )}
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Recipient Name Input */}
-          <div className="group">
-            <label className="block text-left mb-2 text-gray-700 font-bold text-sm uppercase tracking-wide">
-              💖 Their Name
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={recipientName}
-                onChange={(e) => setRecipientName(e.target.value)}
-                placeholder="e.g., Sarah"
-                required
-                className="w-full px-5 py-4 border-2 border-pink-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-300 focus:border-pink-400 transition-all text-lg group-hover:border-pink-300"
-              />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl opacity-50">
-                😊
+          {/* User Info & Actions - Mobile Friendly */}
+          {status === 'authenticated' ? (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-xl">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {session.user.image && (
+                    <img
+                      src={session.user.image}
+                      alt=""
+                      className="w-8 h-8 rounded-full flex-shrink-0"
+                    />
+                  )}
+                  <p className="text-xs md:text-sm text-green-700 truncate">
+                    <span className="font-semibold">{session.user.name || session.user.email}</span>
+                    {rateLimitRemaining !== null && (
+                      <span className="text-green-600"> • {rateLimitRemaining} left</span>
+                    )}
+                  </p>
+                </div>
+                {/* Mobile Actions */}
+                <div className="flex md:hidden gap-2 flex-shrink-0">
+                  <a
+                    href="/dashboard"
+                    className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-all font-semibold text-xs"
+                  >
+                    Links
+                  </a>
+                  <SignInButton />
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="p-3 bg-pink-50 border border-pink-200 rounded-xl flex items-center justify-between">
+              <p className="text-sm text-pink-700 font-semibold">Sign in to create messages</p>
+              <div className="md:hidden">
+                <SignInButton />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Recipient Name Input */}
+          <div>
+            <label className="block text-left mb-2 text-gray-700 font-semibold text-sm">
+              Their Name
+            </label>
+            <input
+              type="text"
+              value={recipientName}
+              onChange={(e) => setRecipientName(e.target.value)}
+              placeholder="e.g., Sarah"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all"
+            />
           </div>
 
           {/* Sender Email Input */}
-          <div className="group">
-            <label className="block text-left mb-2 text-gray-700 font-bold text-sm uppercase tracking-wide">
-              📧 Your Email
+          <div>
+            <label className="block text-left mb-2 text-gray-700 font-semibold text-sm">
+              Your Email
             </label>
-            <div className="relative">
-              <input
-                type="email"
-                value={senderEmail}
-                onChange={(e) => setSenderEmail(e.target.value)}
-                placeholder="your.email@example.com"
-                required
-                className="w-full px-5 py-4 border-2 border-pink-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-300 focus:border-pink-400 transition-all text-lg group-hover:border-pink-300"
-              />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl opacity-50">
-                📮
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mt-2 ml-1">
-              We'll notify you when they say YES! ✨
+            <input
+              type="email"
+              value={senderEmail}
+              onChange={(e) => setSenderEmail(e.target.value)}
+              placeholder="your.email@example.com"
+              required
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all"
+            />
+            <p className="text-xs text-gray-500 mt-1.5">
+              We'll notify you when they say YES!
             </p>
           </div>
 
           {/* Sender Name Input (Optional) */}
-          <div className="group">
-            <label className="block text-left mb-2 text-gray-700 font-bold text-sm uppercase tracking-wide">
-              ✨ Your Name <span className="text-gray-400 text-xs normal-case">(Optional)</span>
+          <div>
+            <label className="block text-left mb-2 text-gray-700 font-semibold text-sm">
+              Your Name <span className="text-gray-400 text-xs font-normal">(Optional)</span>
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={senderName}
-                onChange={(e) => setSenderName(e.target.value)}
-                placeholder="e.g., John"
-                className="w-full px-5 py-4 border-2 border-pink-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-300 focus:border-pink-400 transition-all text-lg group-hover:border-pink-300"
-              />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl opacity-50">
-                🎭
-              </div>
-            </div>
+            <input
+              type="text"
+              value={senderName}
+              onChange={(e) => setSenderName(e.target.value)}
+              placeholder="e.g., John"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-400 transition-all"
+            />
           </div>
 
           {/* CAPTCHA */}
@@ -252,27 +245,19 @@ export default function Home() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full relative overflow-hidden py-5 text-white font-black text-xl rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group/btn"
+            className="w-full py-4 text-white font-bold text-lg rounded-xl transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: 'linear-gradient(135deg, #ec4899 0%, #ef4444 50%, #8b5cf6 100%)',
             }}
           >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              {loading ? (
-                <>
-                  <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  Generate Magic Link ✨
-                  <span className="inline-block group-hover/btn:translate-x-1 transition-transform">
-                    →
-                  </span>
-                </>
-              )}
-            </span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Generating...
+              </span>
+            ) : (
+              'Generate Magic Link ✨'
+            )}
           </button>
         </form>
 
@@ -329,24 +314,15 @@ export default function Home() {
 
         {/* Footer */}
         <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-          <p className="text-sm text-gray-500 mb-3">
-            Made with <span className="text-red-500 animate-pulse">❤️</span> for spreading love
+          <p className="text-xs md:text-sm text-gray-500">
+            Made with ❤️ for spreading love •{' '}
+            <a
+              href="/donate"
+              className="text-pink-600 hover:text-pink-700 hover:underline font-semibold"
+            >
+              Support
+            </a>
           </p>
-          <a
-            href="/donate"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-pink-600 hover:text-pink-700 hover:underline transition-all"
-          >
-            ☕ Buy me a coffee
-          </a>
-          <span className="text-gray-300 mx-2">•</span>
-          <a
-            href="https://buymeacoffee.com/riturajratan"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline transition-all"
-          >
-            Support this project ✨
-          </a>
         </div>
       </div>
 
