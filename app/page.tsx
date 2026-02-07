@@ -34,6 +34,7 @@ export default function Home() {
     // Check if user is authenticated
     if (!session) {
       setShowAuthPrompt(true)
+      alert('🔒 Please sign in first to create Valentine messages!')
       return
     }
 
@@ -184,8 +185,10 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="p-3 bg-pink-50 border border-pink-200 rounded-xl flex items-center justify-between">
-              <p className="text-sm text-pink-700 font-semibold">Sign in to create messages</p>
+            <div className={`p-3 rounded-xl flex items-center justify-between ${showAuthPrompt ? 'bg-red-50 border-2 border-red-500 animate-pulse' : 'bg-pink-50 border border-pink-200'}`}>
+              <p className={`text-sm font-semibold ${showAuthPrompt ? 'text-red-700' : 'text-pink-700'}`}>
+                {showAuthPrompt ? '🔒 Please sign in first to create messages!' : 'Sign in to create messages'}
+              </p>
               <div className="md:hidden">
                 <SignInButton />
               </div>
@@ -255,7 +258,7 @@ export default function Home() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !session}
             className="w-full py-4 text-white font-bold text-lg rounded-xl transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: 'linear-gradient(135deg, #ec4899 0%, #ef4444 50%, #8b5cf6 100%)',
@@ -266,6 +269,8 @@ export default function Home() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 Generating...
               </span>
+            ) : !session ? (
+              '🔒 Sign In to Generate Link'
             ) : (
               'Generate Magic Link ✨'
             )}
